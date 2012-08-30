@@ -1,8 +1,9 @@
-/*
- * jQuery UI Droppable 1.8.15
+/*!
+ * jQuery UI Droppable @VERSION
+ * http://jqueryui.com
  *
- * Copyright 2011, AUTHORS.txt (http://jqueryui.com/about)
- * Dual licensed under the MIT or GPL Version 2 licenses.
+ * Copyright 2012 jQuery Foundation and other contributors
+ * Released under the MIT license.
  * http://jquery.org/license
  *
  * http://docs.jquery.com/UI/Droppables
@@ -16,6 +17,7 @@
 (function( $, undefined ) {
 
 $.widget("ui.droppable", {
+	version: "@VERSION",
 	widgetEventPrefix: "drop",
 	options: {
 		accept: '*',
@@ -46,18 +48,13 @@ $.widget("ui.droppable", {
 
 	},
 
-	destroy: function() {
+	_destroy: function() {
 		var drop = $.ui.ddmanager.droppables[this.options.scope];
 		for ( var i = 0; i < drop.length; i++ )
 			if ( drop[i] == this )
 				drop.splice(i, 1);
 
-		this.element
-			.removeClass("ui-droppable ui-droppable-disabled")
-			.removeData("droppable")
-			.unbind(".droppable");
-
-		return this;
+		this.element.removeClass("ui-droppable ui-droppable-disabled");
 	},
 
 	_setOption: function(key, value) {
@@ -146,10 +143,6 @@ $.widget("ui.droppable", {
 
 });
 
-$.extend($.ui.droppable, {
-	version: "1.8.15"
-});
-
 $.ui.intersect = function(draggable, droppable, toleranceMode) {
 
 	if (!droppable.offset) return false;
@@ -227,7 +220,7 @@ $.ui.ddmanager = {
 
 			if(!this.options) return;
 			if (!this.options.disabled && this.visible && $.ui.intersect(draggable, this, this.options.tolerance))
-				dropped = dropped || this._drop.call(this, event);
+				dropped = this._drop.call(this, event) || dropped;
 
 			if (!this.options.disabled && this.visible && this.accept.call(this.element[0],(draggable.currentItem || draggable.element))) {
 				this.isout = 1; this.isover = 0;
@@ -260,7 +253,12 @@ $.ui.ddmanager = {
 
 			var parentInstance;
 			if (this.options.greedy) {
-				var parent = this.element.parents(':data(droppable):eq(0)');
+				// find droppable parents with same scope
+				var scope = this.options.scope;
+				var parent = this.element.parents(':data(droppable)').filter(function () {
+					return $.data(this, 'droppable').options.scope === scope;
+				});
+
 				if (parent.length) {
 					parentInstance = $.data(parent[0], 'droppable');
 					parentInstance.greedyChild = (c == 'isover' ? 1 : 0);
